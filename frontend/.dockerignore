@@ -1,0 +1,15 @@
+# Git
+.git
+.gitignore
+
+# Dependencies
+node_modules/
+
+# Build
+dist/
+coverage/
+
+# Misc
+.env
+.DS_Store
+*.log

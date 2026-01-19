@@ -1,0 +1,14 @@
+# Git
+.git
+.gitignore
+
+# Go
+bin/
+main
+*.exe
+*.test
+vendor/
+.env
+
+# MacOS
+.DS_Store

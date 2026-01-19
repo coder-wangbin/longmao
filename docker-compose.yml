@@ -1,22 +1,72 @@
 version: '3.8'
 
 services:
-  # ----------------------------
-  # [TODO] 候选人请在此处补充配置
-  # ----------------------------
+  # -------------------------------------------------------------------------
+  # Database Service
+  # -------------------------------------------------------------------------
+  db:
+    image: postgres:15-alpine
+    container_name: longmao-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-longmao}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secret}
+      POSTGRES_DB: ${POSTGRES_DB:-longmao_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - longmao-net
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U longmao -d longmao_db" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
-  # 示例结构 (请取消注释并修改):
+  # -------------------------------------------------------------------------
+  # Backend Service (Go)
+  # -------------------------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: longmao-backend
+    ports:
+      - "8080:8080"
+    environment:
+      # Database Connection Info
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: ${POSTGRES_USER:-longmao}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-secret}
+      DB_NAME: ${POSTGRES_DB:-longmao_db}
+      # App Config
+      PORT: 8080
+      GIN_MODE: debug # Change to release in production
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - longmao-net
 
-  # frontend:
-  #   build: ./frontend
-  #   ports:
-  #     - "3000:3000"
+  # -------------------------------------------------------------------------
+  # Frontend Service (React)
+  # -------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: longmao-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - longmao-net
 
-  # backend:
-  #   build: ./backend
-  #   ports:
-  #     - "8000:8000"
+networks:
+  longmao-net:
+    driver: bridge
 
-  # db:
-  #   image: postgres:15 (or mysql/redis)
-  #   ...
+volumes:
+  postgres_data:
