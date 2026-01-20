@@ -1,96 +1,134 @@
-# 🚀 Prompt2Repo 准入考核 (Entrance Challenge)
+# 龙猫看板 (Longmao Kanban)
 
-## 📌 考核背景
-本项目寻找具备 **"AI Native" (Vibe Coding)** 能力的资深工程师。我们需要你展示如何利用 **Cursor / Trae / Claude Code** 等 AI 工具，快速构建**工程化标准**的应用。
+这是一个基于现代技术栈构建的全栈看板应用，类似于 Trello。项目采用了 Go (Gin) 作为后端，React (Vite + Tailwind) 作为前端，并使用 PostgreSQL 进行数据持久化。整个项目已经实现了高度的容器化和镜像优化，支持一键部署。
 
-> **核心考核点**：
-> 1. **AI 驾驭能力**：不仅是生成代码，而是生成架构、调试 Bug、优化工程。
-> 2. **Docker 交付标准**：强制容器化交付，拒绝“在我本地能跑”的代码。
-> 3. **全栈审美**：拒绝简陋 UI，需具备商业级交付意识。
+## 🛠 技术栈
+
+### 后端 (Backend)
+- **语言**: Go (Golang)
+- **Web 框架**: Gin
+- **ORM**: GORM
+- **数据库**: PostgreSQL 15
+- **特性**: RESTful API, 结构化日志, 跨域处理 (CORS)
+
+### 前端 (Frontend)
+- **框架**: React 18
+- **构建工具**: Vite
+- **样式**: Tailwind CSS
+- **拖拽库**: @dnd-kit (支持无障碍访问和高性能拖拽)
+- **图标**: Lucide React
+- **HTTP 客户端**: Axios
+
+### 基础设施 (Infrastructure)
+- **容器化**: Docker
+- **编排**: Docker Compose
+- **Web 服务器**: Nginx (用于生产环境前端托管)
+- **优化**:
+  - 后端采用 Multi-stage 构建，最终镜像基于 `scratch`，体积极其精简 (~15MB)。
+  - 前端构建后通过 Nginx Alpine Slim 镜像托管，体积小巧且高性能。
+
+## ✨ 功能特性
+
+1.  **看板管理**:
+    -默认包含 "To Do", "In Progress", "Done" 三个状态列。
+    - 界面居中布局，适配不同屏幕宽度。
+
+2.  **任务交互 (Trello 风格)**:
+    - **拖拽排序**: 支持任务卡片在不同列之间自由拖拽流转。
+    - **行内添加**: 点击列底部的 "Add a card" 按钮，直接在当前位置展开文本框输入任务内容，无需弹窗。
+    - **交互优化**: 文本框支持自动聚焦、回车提交、点击外部取消。
+
+3.  **数据持久化**:
+    - 所有任务数据实时保存至 PostgreSQL 数据库。
+    - 容器重启后数据不丢失 (使用 Docker Volume)。
+
+## 📂 目录结构
+
+```
+longmao/
+├── backend/                # Go 后端源码
+│   ├── config/            # 数据库配置
+│   ├── controllers/       # API 控制器
+│   ├── models/            # 数据模型结构
+│   ├── routes/            # 路由定义
+│   ├── main.go            # 入口文件
+│   └── Dockerfile         # 后端构建文件 (Multi-stage)
+├── frontend/               # React 前端源码
+│   ├── src/
+│   │   ├── components/    # 组件 (Column, Card, Board)
+│   │   └── ...
+│   └── Dockerfile         # 前端构建文件 (Nginx host)
+├── docs/                   # 项目文档
+│   └── ai_interaction_log.md # AI 交互开发记录
+├── docker-compose.yml      # 容器编排配置
+└── README.md               # 项目说明
+```
+
+## 🚀 快速开始 (Docker 方式 - 推荐)
+
+这是最简单的运行方式，你需要安装 Docker 和 Docker Compose。
+
+1.  **启动服务**:
+    ```bash
+    docker-compose up -d --build
+    ```
+    此命令会构建前端和后端镜像，并启动 PostgreSQL 数据库。
+
+2.  **访问应用**:
+    - 前端页面: [http://localhost:5173](http://localhost:5173)
+    - 后端 API: [http://localhost:8080](http://localhost:8080)
+
+3.  **查看日志**:
+    ```bash
+    docker-compose logs -f
+    ```
+
+4.  **停止服务**:
+    ```bash
+    docker-compose down
+    ```
+
+## 💻 本地开发指南
+
+如果你想在本地进行调试开发：
+
+### 1. 启动数据库
+你可以单独使用 Docker 启动一个 Postgres 实例：
+```bash
+docker run --name longmao-db -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=kanban -p 5432:5432 -d postgres:15-alpine
+```
+
+### 2.后端 (Backend)
+```bash
+cd backend
+go mod download
+# 确保数据库已运行，然后启动后端
+go run main.go
+```
+后端服务将运行在 `http://localhost:8080`。
+
+### 3. 前端 (Frontend)
+```bash
+cd frontend
+npm install
+npm run dev
+```
+前端开发服务器将运行在 `http://localhost:5173`。
+
+## 🔌 API 接口概览
+
+| 方法 | 路径 | 描述 |
+|------|------|------|
+| GET | `/api/cards` | 获取所有任务卡片 |
+| POST | `/api/cards` | 创建新卡片 |
+| PUT | `/api/cards/:id` | 更新卡片 (标题、描述) |
+| PUT | `/api/cards/:id/move` | 移动卡片 (更新状态/位置) |
+| DELETE | `/api/cards/:id` | 删除卡片 |
+
+## 📝 开发记录
+
+由于本项目是基于 AI 辅助编程完成的，完整的开发与交互过程日志已被记录在文档中。
+查看详情: [AI Interaction Log](docs/ai_interaction_log.md)
 
 ---
-
-## 🎯 题目菜单 (任选其一)
-
-请根据你的技术栈，从以下 5 个题目中**任选 1 个**完成。
-
-### A 纯前端：动态主题仪表盘 (SaaS Dashboard)
-* **目标**：构建一个销售数据看板，支持 Light/Dark 主题切换。
-* **技术**：React/Vue + Echarts/Recharts + **Tailwind/AntD (必选)**。
-* **交付**：将前端静态资源或服务容器化，实现一键启动。
-
-### B 纯后端：短链接生成服务 (URL Shortener)
-* **目标**：实现长链接转短链接的 REST API (POST/GET)，含重定向逻辑。
-* **技术**：Python/Go/Java/Node + Redis/SQLite。
-* **交付**：API 服务与数据库均需 Docker 化。
-
-### C 全栈：看板任务管理 (Kanban Board) —— ⭐ 推荐
-* **目标**：实现类似 Trello 的任务拖拽 (Todo/Doing/Done) 及数据同步。
-* **技术**：Web 前端 + 后端 API + 数据库。
-* **交付**：前后端及数据库必须通过 `docker compose` 一键联调。
-
-### D 跨平台/小程序：咖啡点单 (Coffee Order App)
-* **目标**：模拟点单流程（商品列表、规格选择、购物车）。
-* **技术**：Uni-app / Taro / Flutter / 微信原生。
-* **交付**：**客户端代码本地运行** + **后端 API/DB 必须 Docker 化**。
-
-### E 原生移动端：健身计时器 (Fitness Timer)
-* **目标**：HIIT 倒计时工具，支持后台运行和声音提示。
-* **技术**：Swift / Kotlin / React Native。
-* **交付**：**App 代码本地运行** + **后端 API/DB 必须 Docker 化**。
-
----
-
-## 📦 统一交付标准 (Unified Delivery Standard)
-
-本项目强制要求 **Docker 化交付**。请根据你选择的题目类型，遵守以下目录结构和规范：
-
-### 1. 针对 Web / 全栈 / 纯后端 (Type A, B, C)
-你的仓库必须包含完整的前后端容器配置。
-* **结构示例**：
-  ```text
-  ├── frontend/ (含 Dockerfile)
-  ├── backend/  (含 Dockerfile)
-  └── docker-compose.yml  <-- 必须包含，负责启动所有服务
-### 验收标准
-阅卷官执行 `docker compose up` 后，浏览器打开 `localhost:xxxx` 即可正常使用。
-
-### 2. 针对 移动端/小程序
-我们理解 App 无法在容器内运行，因此采取
-**“后端装箱，前端裸奔”**的策略。
-
-* **结构示例**：
-  ```text
-  ├── client/             <-- 放置 App/小程序源码 (无需 Docker)
-  ├── backend/            <-- 放置后端 API 源码 (必须 Docker)
-  └── docker-compose.yml  <-- 仅负责启动 backend 和 db
-  ### 验收标准
-* **GitHub Actions** 必须能成功构建 Backend 镜像。
-* **必须提供录屏**：展示 App 在模拟器/真机上运行，并成功连接 Docker 后端的演示。
-
-> ⚠️ **网络连接提示 (Crucial Tip)**：
-> 在模拟器中访问 Docker 后端时，**不能使用 `localhost`**：
-> * **Android 模拟器**：请尝试 `10.0.2.2:端口`
-> * **真机调试**：请使用电脑的局域网 IP (如 `192.168.1.x`)
-> * *请在代码中预留 Base URL 配置项。*
-
----
-
-## 🚨 验收红线 (Red Lines)
-**出现以下情况将直接淘汰，不予人工审核：**
-
-* ❌ **CI 构建失败**：GitHub Actions 页面显示红色 ❌ (Build Failed)。
-* ❌ **无 Docker 配置**：根目录找不到有效 `docker-compose.yml`。
-* ❌ **UI 审美缺失**：界面排版混乱、无间距、使用浏览器默认样式。
-* ❌ **缺少演示视频**：移动端/小程序未提供真机运行录屏。
-
----
-
-## 🚀 操作流程 (How to Start)
-
-1.  **领取考卷**：点击本页面右上角绿色按钮 **[Use this template]** -> **Create a new repository**。
-    * *注意：请将你的仓库设为 **Public**，否则 Actions 可能无法运行。*
-2.  **AI 开发**：使用 Cursor/Antigravity 等工具完成代码。
-3.  **机器自测**：Push 代码后，点击仓库顶部的 **[Actions]** 标签，确保显示 ✅ (Green)。
-4.  **提交作业**：
-    * 请将 **GitHub 仓库链接** + **Actions 绿灯截图** + **演示视频** 提交给招聘方。
+Generated by GitHub Copilot (Gemini 3 Pro)
